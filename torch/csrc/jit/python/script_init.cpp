@@ -1568,7 +1568,13 @@ void initJitScriptBindings(PyObject* module) {
       .def(
           "add_builtin_function",
           &ConcreteModuleTypeBuilder::addBuiltinFunction)
-      .def("add_module", &ConcreteModuleTypeBuilder::addModule)
+      .def(
+          "add_module",
+          [](ConcreteModuleTypeBuilder& self,
+             std::string name,
+             std::shared_ptr<ConcreteModuleType> meta) {
+            self.addModule(std::move(name), std::move(meta));
+          })
       .def("add_overload", &ConcreteModuleTypeBuilder::addOverload)
       .def("set_poisoned", &ConcreteModuleTypeBuilder::setPoisoned)
       .def(
@@ -1590,6 +1596,9 @@ void initJitScriptBindings(PyObject* module) {
           [](ConcreteModuleTypeBuilder& self) {
             self.setIterableModuleKind(IterableModuleKind::DICT);
           })
+      .def(
+          "set_contained_type_hint",
+          &ConcreteModuleTypeBuilder::setContainedTypeHint)
       .def("build", &ConcreteModuleTypeBuilder::build)
       .def(
           "equals",
