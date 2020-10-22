@@ -386,6 +386,7 @@ class BatchNorm(QuantizeHandler):
             load_arg(quantized=False)(self.bn_node.kwargs))
 
 @register_quant_pattern(torch.nn.Embedding)
+@register_quant_pattern(torch.nn.EmbeddingBag)
 class Embedding(QuantizeHandler):
     def __init__(self, quantizer, node):
         super().__init__(quantizer, node)
@@ -396,7 +397,7 @@ class Embedding(QuantizeHandler):
         emb = quantizer.modules[emb_node.target]
         qconfig = quantizer.qconfig_map[node.name]
         assert not activation_is_statically_quantized(qconfig)
-        qemb = nnq.Embedding
+        qemb = get_static_quant_module_class(type(emb))
         quantized = qemb.from_float(emb)
         parent_name, name = _parent_name(emb_node.target)
         setattr(quantizer.modules[parent_name], name, quantized)
