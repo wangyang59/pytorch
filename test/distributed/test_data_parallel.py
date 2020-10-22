@@ -515,6 +515,26 @@ class TestDataParallel(TestCase):
         self.assertEqual(out, expected_out, atol=dtype2prec_DONTUSE[dtype], rtol=0)
 
     @unittest.skipIf(not TEST_MULTIGPU, "multi-GPU not supported")
+    def test_data_parallel_module_zero_inputs(self):
+        class TestModule(nn.Module):
+            def forward(self):
+                t = torch.eye(2, 3, device='cuda:0')
+                return t + (1 - t)
+
+        expected = torch.ones(2, 3, device='cuda:0')
+
+        model = TestModule()
+        pmodel = torch.nn.DataParallel(model, [0])
+        out = pmodel()
+        self.assertEqual(out.get_device(), 0)
+        self.assertEqual(out, expected)
+
+        pmodel = torch.nn.DataParallel(model, [0, 1])
+        out = pmodel()
+        self.assertEqual(out.get_device(), 0)
+        self.assertEqual(out, expected)
+
+    @unittest.skipIf(not TEST_MULTIGPU, "multi-GPU not supported")
     def test_data_parallel_device_args(self):
         cuda0 = torch.device('cuda:0')
         cuda1 = torch.device('cuda:1')

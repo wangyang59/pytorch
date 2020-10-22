@@ -155,8 +155,15 @@ class DataParallel(Module):
                                    "them on device: {}".format(self.src_device_obj, t.device))
 
         inputs, kwargs = self.scatter(inputs, kwargs, self.device_ids)
+        # for forward function without any inputs, empty list and dict will be created
+        # so the module can be executed on one device which is the first one in device_ids
+        if not inputs and not kwargs:
+            inputs = ((),)
+            kwargs = ({},)
+
         if len(self.device_ids) == 1:
             return self.module(*inputs[0], **kwargs[0])
+
         replicas = self.replicate(self.module, self.device_ids[:len(inputs)])
         outputs = self.parallel_apply(replicas, inputs, kwargs)
         return self.gather(outputs, self.output_device)
